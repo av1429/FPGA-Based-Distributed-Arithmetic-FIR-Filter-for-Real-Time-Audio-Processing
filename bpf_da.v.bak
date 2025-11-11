@@ -1,0 +1,68 @@
+module bpf_da #(
+    parameter DATA_WIDTH = 16,  // Input data width
+    parameter NUM_TAPS = 16     // Number of filter coefficients
+)(
+    input wire clk,
+    input wire rst,
+    input wire signed [DATA_WIDTH-1:0] x_in,  // 16-bit Input Sample
+    output reg signed [DATA_WIDTH-1:0] y_out // Filtered Output
+);
+
+    // **Shift Register for Past Inputs**
+    reg signed [DATA_WIDTH-1:0] shift_reg [0:NUM_TAPS-1];
+
+    // **DA LUT: Stores Precomputed Partial Sums**
+	 reg signed [2*DATA_WIDTH-1:0] lut [0:(1<<4)-1];  // 4-bit index for precomputed sums
+
+
+    // **Accumulator for DA Computation**
+    reg signed [2*DATA_WIDTH-1:0] acc;
+
+    // **Bit Serial Computation Variables**
+    integer bit_pos, idx, k;
+
+    // **Initialize DA LUT with Precomputed Coefficients**
+    initial begin
+        lut[0] = 0;
+        lut[1] = 16'sd28;    lut[2] = 16'sd82;    lut[3] = 16'sd178;
+        lut[4] = 16'sd318;   lut[5] = 16'sd478;   lut[6] = 16'sd605;
+        lut[7] = 16'sd620;   lut[8] = 16'sd441;   lut[9] = 16'sd8;
+        lut[10] = -16'sd694; lut[11] = -16'sd1617; lut[12] = -16'sd2650;
+        lut[13] = -16'sd3641; lut[14] = -16'sd4421; lut[15] = -16'sd4851;
+        // More precomputed values here (full LUT stored in ROM)
+    end
+
+    // **Shift Register Logic**
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            for (k = 0; k < NUM_TAPS; k = k + 1)
+                shift_reg[k] <= 0;
+        end else begin
+            shift_reg[0] <= x_in;
+            for (k = 1; k < NUM_TAPS; k = k + 1)
+                shift_reg[k] <= shift_reg[k - 1];
+        end
+    end
+
+    // **Fully DA-Based Computation**
+    always @(posedge clk or posedge rst) begin
+        if (rst) begin
+            y_out <= 0;
+        end else begin
+            acc = 0;  // Reset accumulator
+
+            // **Bit-Serial Processing: Compute LUT Index**
+            for (bit_pos = 0; bit_pos < DATA_WIDTH; bit_pos = bit_pos + 1) begin
+                idx = 0;
+                for (k = 0; k < NUM_TAPS; k = k + 1) begin
+                    idx = idx | ((shift_reg[k][bit_pos] ? 1 : 0) << k);
+                end
+                acc = acc + lut[idx];  // **LUT-Based Accumulation**
+            end
+
+            // **Final Output Scaling**
+            y_out <= acc[2*DATA_WIDTH-1:DATA_WIDTH]; // Keep relevant bits
+        end
+    end
+
+endmodule
