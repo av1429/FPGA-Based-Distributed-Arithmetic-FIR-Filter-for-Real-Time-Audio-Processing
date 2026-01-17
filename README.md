@@ -1,10 +1,5 @@
 # 🎶 Distributed Arithmetic Based FIR Filter: FPGA Implementation
 
-> ⚠️ **Research Confidentiality Notice**  
-> This project is part of an ongoing research work submitted for IEEE publication.  
-> The source files, data, and implementation details are provided here for academic reference only.  
-> Redistribution, modification, or reuse of the content is **not permitted** without explicit author consent.
-
 ---
 
 ## 📘 Overview
@@ -123,13 +118,6 @@ B.Tech – Electronics & Communication Engineering (Cyber Physical Systems)
 SASTRA Deemed University  
 
 🔗 [GitHub Profile](https://github.com/av1429)
-
----
-
-## ⚠️ Intellectual Property Notice
-This repository and all associated content are part of a **research project submitted for IEEE publication**.  
-Unauthorized reproduction, redistribution, or modification of the source code or results is **strictly prohibited**.  
-For academic references or collaborations, please contact the author directly.
 
 ---
 
